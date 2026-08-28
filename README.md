@@ -12,6 +12,7 @@ added over time.
 | Two Sum | `solutions/two_sum.py` | hash map | O(n) |
 | Longest Substring Without Repeating Characters | `solutions/sliding_window.py` | sliding window + last-index dict | O(n) |
 | Kth Largest Element | `solutions/heap.py` | min-heap of size k (+ brute reference) | O(n log k) |
+| Longest Palindromic Substring | `solutions/longest_palindrome.py` | center expansion (odd + even centers) | O(n^2) |
 
 ## Run the tests
 
