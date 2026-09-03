@@ -14,6 +14,7 @@ added over time.
 | Kth Largest Element | `solutions/heap.py` | min-heap of size k (+ brute reference) | O(n log k) |
 | Longest Palindromic Substring | `solutions/longest_palindrome.py` | center expansion (odd + even centers) | O(n^2) |
 | Merge Intervals | `solutions/merge_intervals.py` | sort + sweep (+ brute reference) | O(n log n) |
+| Binary Search — first / last occurrence | `solutions/binary_search.py` | two-sided binary search (+ count helper) | O(log n) |
 
 ## Run the tests
 

@@ -5,6 +5,7 @@ from solutions.sliding_window import length_of_longest
 from solutions.heap import kth_largest, kth_largest_brute
 from solutions.longest_palindrome import longest_palindromic_substring, is_palindrome
 from solutions.merge_intervals import merge_intervals, merge_intervals_brute
+from solutions.binary_search import first_occurrence, last_occurrence, count_occurrences
 
 
 def test_two_sum():
@@ -96,5 +97,60 @@ def test_merge_intervals_random_vs_brute():
         # result must be disjoint and sorted by start
         for i in range(len(got) - 1):
             assert got[i][1] < got[i + 1][0]
+
+
+def test_binary_search_first_last_known():
+    # classic LeetCode 34 examples
+    nums = [1, 2, 2, 2, 3, 4, 4, 5, 5]
+    assert first_occurrence(nums, 2) == 1
+    assert last_occurrence(nums, 2) == 3
+    # target at the very edges of the array
+    assert first_occurrence(nums, 1) == 0
+    assert last_occurrence(nums, 1) == 0
+    assert first_occurrence(nums, 5) == 7
+    assert last_occurrence(nums, 5) == 8
+    # single-element arrays and empty input
+    assert first_occurrence([7], 7) == 0
+    assert last_occurrence([7], 7) == 0
+    assert first_occurrence([], 1) == 0
+    assert last_occurrence([], 1) == -1
+
+
+def test_binary_search_absent_targets():
+    # when target is absent, the helpers return insertion points (or -1),
+    # so count must come out exactly 0 -- including the empty-array edge case
+    nums = [2, 4, 6]
+    assert count_occurrences(nums, 3) == 0   # between two elements
+    assert count_occurrences(nums, 1) == 0   # before the first element
+    assert count_occurrences(nums, 7) == 0   # after the last element
+    assert count_occurrences([], 1) == 0
+
+
+def test_binary_search_random_vs_brute():
+    import random
+    rng = random.Random(11)
+    for _ in range(30):
+        n = rng.randint(0, 40)
+        # non-decreasing array with deliberate duplicates
+        arr = sorted(rng.choice(range(6)) for _ in range(n))
+        target = rng.randint(0, 7)
+        expected_first = arr.index(target) if target in arr else None
+        expected_last = len(arr) - 1 - arr[::-1].index(target) if target in arr else None
+        assert count_occurrences(arr, target) == arr.count(target)
+        # when present, the bounds must bracket exactly the run of target
+        if expected_first is not None:
+            got_first = first_occurrence(arr, target)
+            got_last = last_occurrence(arr, target)
+            assert got_first == expected_first and got_last == expected_last
+            assert arr[got_first] == arr[got_last] == target
+            # everything in [first..last] is target, just outside it is not
+            if got_first > 0:
+                assert arr[got_first - 1] < target
+            if got_last < n - 1:
+                assert arr[got_last + 1] > target
+        else:
+            # absent: first is the insertion point, last points before it
+            ins = first_occurrence(arr, target)
+            assert last_occurrence(arr, target) == ins - 1
 
 
