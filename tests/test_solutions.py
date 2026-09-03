@@ -4,6 +4,7 @@ from solutions.two_sum import two_sum
 from solutions.sliding_window import length_of_longest
 from solutions.heap import kth_largest, kth_largest_brute
 from solutions.longest_palindrome import longest_palindromic_substring, is_palindrome
+from solutions.merge_intervals import merge_intervals, merge_intervals_brute
 
 
 def test_two_sum():
@@ -60,4 +61,40 @@ def test_longest_palindrome_random():
         assert is_palindrome(got) and len(got) == expected_len
         # must be a contiguous substring of the input
         assert s.find(got) != -1 or got == ""
+
+
+def test_merge_intervals_known():
+    # classic LeetCode examples
+    assert merge_intervals([[1, 3], [2, 6], [8, 10], [15, 18]]) == [[1, 6], [8, 10], [15, 18]]
+    assert merge_intervals([[1, 4], [4, 5]]) == [[1, 5]]  # touching endpoints merge
+    # nested interval: [1,10] swallows [2,3]
+    assert merge_intervals([[1, 10], [2, 3]]) == [[1, 10]]
+    assert merge_intervals([[2, 3], [4, 5]]) == [[2, 3], [4, 5]]
+    # unsorted input is sorted before the sweep
+    assert merge_intervals([[8, 10], [1, 6], [2, 4]]) == [[1, 6], [8, 10]]
+
+
+def test_merge_intervals_degenerate():
+    assert merge_intervals([]) == []
+    assert merge_intervals([[5, 5]]) == [[5, 5]]
+    # input is not mutated
+    orig = [(1, 3), (2, 6)]
+    merge_intervals(orig)
+    assert orig == [(1, 3), (2, 6)]
+
+
+def test_merge_intervals_random_vs_brute():
+    import random
+    rng = random.Random(7)
+    for _ in range(30):
+        n = rng.randint(1, 8)
+        intervals = [(a, b) for a, b in
+                     sorted((rng.randint(0, 12), rng.randint(0, 12)) for _ in range(n)) if a <= b]
+        got = merge_intervals(intervals)
+        expected = merge_intervals_brute(intervals)
+        assert got == expected
+        # result must be disjoint and sorted by start
+        for i in range(len(got) - 1):
+            assert got[i][1] < got[i + 1][0]
+
 
