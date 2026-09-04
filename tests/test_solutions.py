@@ -6,6 +6,7 @@ from solutions.heap import kth_largest, kth_largest_brute
 from solutions.longest_palindrome import longest_palindromic_substring, is_palindrome
 from solutions.merge_intervals import merge_intervals, merge_intervals_brute
 from solutions.binary_search import first_occurrence, last_occurrence, count_occurrences
+from solutions.coin_change import coin_change, coin_change_brute
 
 
 def test_two_sum():
@@ -152,5 +153,42 @@ def test_binary_search_random_vs_brute():
             # absent: first is the insertion point, last points before it
             ins = first_occurrence(arr, target)
             assert last_occurrence(arr, target) == ins - 1
+
+
+def test_coin_change_known():
+    # classic LeetCode examples
+    assert coin_change([1, 2, 5], 11) == 3          # 5+5+1
+    assert coin_change([2], 3) == -1                # odd amount, even coins only
+    assert coin_change([1], 0) == 0                 # zero amount needs zero coins
+    assert coin_change([], 1) == -1                 # no coins at all
+    assert coin_change([186, 419, 83, 402], 6249) == 16
+
+
+def test_coin_change_degenerate():
+    import random
+    rng = random.Random(9)
+    for _ in range(30):
+        coins = sorted(set(rng.randint(1, 15) for _ in range(rng.randint(1, 5))))
+        amount = rng.randint(0, 60)
+        # DP answer must match the exhaustive reference exactly
+        assert coin_change(coins, amount) == coin_change_brute(coins, amount)
+
+
+def test_coin_change_validity():
+    import random
+    rng = random.Random(13)
+    for _ in range(25):
+        coins = sorted(set(rng.randint(1, 20) for _ in range(rng.randint(1, 4))))
+        amount = rng.randint(1, 80)
+        got = coin_change(coins, amount)
+        if got != -1:
+            # the count must be achievable: some multiset of exactly `got` coins sums to amount
+            # (verified by rebuilding with the DP's own table-free brute check)
+            assert got >= 1
+            assert coin_change_brute(coins, amount) == got
+        else:
+            # no combination exists even for the reference search
+            assert coin_change_brute(coins, amount) == -1
+
 
 
