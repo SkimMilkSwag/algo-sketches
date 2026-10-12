@@ -211,19 +211,24 @@ def test_topo_sort_known():
 def test_topo_sort_deterministic_tiebreak():
     # no edges -> the ready set is always everything -> exact sequence pinned
     assert topological_sort(4, []) == [0, 1, 2, 3]
-    # two independent chains: at every step the smallest ready id wins
-    assert topological_sort(4, [(0, 1), (2, 3)]) == [0, 2, 1, 3]
+    # two independent chains: the smallest AVAILABLE id wins at every step,
+    # so 0 unlocks 1 before 2's branch can win the tie
+    assert topological_sort(4, [(0, 1), (2, 3)]) == [0, 1, 2, 3]
 
 
 def test_topo_sort_cycle():
-    for edges in ([(0, 1), (1, 0)], [(0, 1), (1, 2), (2, 0)]):
-        with pytest.raises(TopoCycleError) as exc:
-            topological_sort(3, edges)
-        # every node stuck behind the cycle is reported
-        assert set(exc.value.nodes) == {0, 1}
+    # 2-cycle with a free node: only the cycle members are reported
+    with pytest.raises(TopoCycleError) as exc:
+        topological_sort(3, [(0, 1), (1, 0)])
+    assert set(exc.value.nodes) == {0, 1}
+    # 3-cycle: every node is stuck
+    with pytest.raises(TopoCycleError) as exc:
+        topological_sort(3, [(0, 1), (1, 2), (2, 0)])
+    assert set(exc.value.nodes) == {0, 1, 2}
     # self-loop is a cycle too
-    with pytest.raises(TopoCycleError):
+    with pytest.raises(TopoCycleError) as exc:
         topological_sort(2, [(1, 1)])
+    assert set(exc.value.nodes) == {1}
 
 
 def test_topo_sort_random_matches_brute():

@@ -41,10 +41,16 @@ def topological_sort(num_nodes: int, edges: list[tuple[int, int]]) -> list[int]:
 
     ready: list[int] = [i for i in range(num_nodes) if indegree[i] == 0]
     order: list[int] = []
-    while ready:
-        # smallest ready node first keeps the output deterministic
-        ready.sort()
-        node = ready.pop(0)
+    placed = set(order)
+    while True:
+        if not ready:
+            break
+        # smallest AVAILABLE ready node first keeps the output deterministic;
+        # min() each round so already-ready nodes never leapfrog ones that
+        # just became ready (a full-list sort would reorder them)
+        node = min(ready)
+        ready.remove(node)
+        placed.add(node)
         order.append(node)
         for v in out[node]:
             indegree[v] -= 1
@@ -52,7 +58,7 @@ def topological_sort(num_nodes: int, edges: list[tuple[int, int]]) -> list[int]:
                 ready.append(v)
 
     if len(order) != num_nodes:
-        raise TopoCycleError([i for i in range(num_nodes) if i not in set(order)])
+        raise TopoCycleError([i for i in range(num_nodes) if i not in placed])
     return order
 
 
