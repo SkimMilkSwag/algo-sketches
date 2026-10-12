@@ -1,4 +1,5 @@
 import os, sys
+import pytest
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 from solutions.two_sum import two_sum
 from solutions.sliding_window import length_of_longest
@@ -7,6 +8,8 @@ from solutions.longest_palindrome import longest_palindromic_substring, is_palin
 from solutions.merge_intervals import merge_intervals, merge_intervals_brute
 from solutions.binary_search import first_occurrence, last_occurrence, count_occurrences
 from solutions.coin_change import coin_change, coin_change_brute
+from solutions.topo_sort import topological_sort, topological_sort_brute, TopoCycleError
+from solutions.lru_cache import LRUCache
 
 
 def test_two_sum():
@@ -192,3 +195,104 @@ def test_coin_change_validity():
 
 
 
+
+
+def test_topo_sort_known():
+    # LeetCode 207 example: a valid ordering exists
+    order = topological_sort(6, [(5, 2), (5, 0), (4, 0), (4, 1), (2, 3), (3, 1)])
+    assert sorted(order) == list(range(6))
+    pos = {v: i for i, v in enumerate(order)}
+    for u, v in [(5, 2), (5, 0), (4, 0), (4, 1), (2, 3), (3, 1)]:
+        assert pos[u] < pos[v], (u, v, order)
+    # isolated node (none here, but pin it) and duplicate edges are safe
+    assert sorted(topological_sort(3, [(0, 1), (0, 1)])) == [0, 1, 2]
+
+
+def test_topo_sort_deterministic_tiebreak():
+    # no edges -> the ready set is always everything -> exact sequence pinned
+    assert topological_sort(4, []) == [0, 1, 2, 3]
+    # two independent chains: at every step the smallest ready id wins
+    assert topological_sort(4, [(0, 1), (2, 3)]) == [0, 2, 1, 3]
+
+
+def test_topo_sort_cycle():
+    for edges in ([(0, 1), (1, 0)], [(0, 1), (1, 2), (2, 0)]):
+        with pytest.raises(TopoCycleError) as exc:
+            topological_sort(3, edges)
+        # every node stuck behind the cycle is reported
+        assert set(exc.value.nodes) == {0, 1}
+    # self-loop is a cycle too
+    with pytest.raises(TopoCycleError):
+        topological_sort(2, [(1, 1)])
+
+
+def test_topo_sort_random_matches_brute():
+    import random
+    rng = random.Random(5)
+    for trial in range(60):
+        v = rng.randint(2, 8)
+        # random DAG: only allow edges u->v with u < v => acyclic by construction
+        possible = [(u, vv) for u in range(v) for vv in range(u + 1, v)]
+        edges = [e for e in possible if rng.random() < 0.4]
+        got = topological_sort(v, edges)
+        expected = topological_sort_brute(v, edges)
+        assert got is not None and expected == got
+    # random cyclic graphs: brute says None, fast path must raise
+    for trial in range(30):
+        v = rng.randint(2, 7)
+        edges = [(rng.randrange(v), rng.randrange(v)) for _ in range(rng.randint(v, 2 * v))]
+        if topological_sort_brute(v, edges) is None:
+            with pytest.raises(TopoCycleError):
+                topological_sort(v, edges)
+
+
+def test_lru_basic_and_eviction_order():
+    cache = LRUCache(2)
+    cache.put(1, "a")
+    cache.put(2, "b")
+    assert cache.get(1) == "a"       # 1 is now most-recently-used
+    cache.put(3, "c")                # evicts 2 (LRU), not 1
+    assert cache.get(2) is None
+    assert cache.get(1) == "a"
+    assert cache.get(3) == "c"
+    assert len(cache) == 2
+
+
+def test_lru_update_does_not_evict():
+    cache = LRUCache(2)
+    cache.put(1, "a")
+    cache.put(2, "b")
+    cache.put(1, "A")                # update in place: no eviction yet
+    assert len(cache) == 2 and cache.get(1) == "A"
+    cache.put(3, "c")                # now over capacity -> evicts 2
+    assert cache.get(2) is None and cache.get(3) == "c"
+
+
+def test_lru_eviction_script_matches_manual_trace():
+    # pinned access script; expected evictions in exact order
+    cache = LRUCache(3)
+    events = [("p", 1), ("g", 1), ("p", 2), ("g", 2), ("p", 3), ("g", 3),
+              ("p", 4), ("g", 4), ("p", 5)]
+    for op, k in events:
+        if op == "p":
+            cache.put(k, k * 10)
+        else:
+            assert cache.get(k) == k * 10
+    # Manual trace (cap=3): after puts of 1,2,3 the LRU order is 1,2,3.
+    # put 4 evicts 1; put 5 evicts 2. Survivors are exactly {3, 4, 5}.
+    assert set(k for k in (1, 2, 3, 4, 5) if k in cache) == {3, 4, 5}
+
+
+def test_lru_get_miss_does_not_reorder():
+    cache = LRUCache(2)
+    cache.put(1, "a")
+    cache.put(2, "b")
+    assert cache.get(99) is None     # miss: no access recorded
+    cache.put(3, "c")                # evicts 1 (still the LRU), not 2
+    assert cache.get(1) is None and cache.get(2) == "b"
+
+
+def test_lru_capacity_validation():
+    import pytest as _p
+    with _p.raises(ValueError):
+        LRUCache(0)

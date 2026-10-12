@@ -16,6 +16,8 @@ added over time.
 | Merge Intervals | `solutions/merge_intervals.py` | sort by start + sweep (+ brute reference) | O(n log n) time, O(n) space |
 | Binary Search — first / last occurrence | `solutions/binary_search.py` | two-sided binary search (+ count helper) | O(log n) time, O(1) space |
 | Coin Change (min coins) | `solutions/coin_change.py` | bottom-up DP over sub-amounts (+ brute reference) | O(amount * len(coins)) time, O(amount) space |
+| Topological Sort | `solutions/topo_sort.py` | Kahn's algorithm (in-degree queue, cycle detection) + brute reference | O(V + E) time, O(V + E) space |
+| LRU Cache | `solutions/lru_cache.py` | OrderedDict: MRU at the back, evict from the front | O(1) get/put, O(capacity) space |
 
 ## Run the tests
 
