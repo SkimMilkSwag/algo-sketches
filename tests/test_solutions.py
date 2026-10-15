@@ -10,6 +10,10 @@ from solutions.binary_search import first_occurrence, last_occurrence, count_occ
 from solutions.coin_change import coin_change, coin_change_brute
 from solutions.topo_sort import topological_sort, topological_sort_brute, TopoCycleError
 from solutions.lru_cache import LRUCache
+from solutions.longest_common_substring import (
+    longest_common_substring,
+    longest_common_substring_brute,
+)
 
 
 def test_two_sum():
@@ -301,3 +305,60 @@ def test_lru_capacity_validation():
     import pytest as _p
     with _p.raises(ValueError):
         LRUCache(0)
+
+
+def test_lcs_known_cases():
+    # 'abc' is contiguous in both inputs; note this is NOT the subsequence
+    # answer (a subsequence could skip chars, a substring cannot)
+    assert longest_common_substring("abcde", "abced") == "abc"
+    # longer shared block beats the shorter one ('bcdef' > 'abc')
+    assert longest_common_substring("abcdef", "zbcdefy") == "bcdef"
+    # repeated words: the full word is the shared substring, not a fragment
+    assert longest_common_substring("hello world", "world hello") == "hello"
+    assert longest_common_substring("xyz", "abcd") == ""
+    assert longest_common_substring("", "abc") == ""
+    assert longest_common_substring("a", "a") == "a"
+    # classic: the longest shared block is 2 chars, not 3
+    # ('c' and 'e' are not adjacent in either string)
+    assert longest_common_substring("abcde", "abfce") == "ab"
+
+
+def test_lcs_overlapping_occurrences():
+    # the shared substring appears twice; either copy is a valid answer,
+    # so compare as sets of substrings rather than exact positions
+    s = longest_common_substring("abcabc", "zabcz")
+    assert s == "abc"
+
+
+def test_lcs_result_is_actually_shared_and_longest():
+    a = "abcdxyzabcdef"
+    b = "xyzabcdefzz"
+    result = longest_common_substring(a, b)
+    assert result in a and result in b
+    # "abcdef" (len 6) beats "xyz" (len 3); verify nothing longer is shared
+    for i in range(len(a)):
+        for j in range(len(b)):
+            k = 0
+            while i + k < len(a) and j + k < len(b) and a[i+k] == b[j+k]:
+                k += 1
+            assert k <= len(result)
+
+
+def test_lcs_matches_brute_on_random_inputs():
+    import random
+    rng = random.Random(42)
+    alphabet = "ab"  # tiny alphabet forces many overlapping matches
+    for _ in range(60):
+        a = "".join(rng.choice(alphabet) for _ in range(rng.randint(0, 12)))
+        b = "".join(rng.choice(alphabet) for _ in range(rng.randint(0, 12)))
+        fast = longest_common_substring(a, b)
+        brute = longest_common_substring_brute(a, b)
+        # both must be common substrings of equal (maximal) length
+        assert fast in a and fast in b
+        assert brute in a and brute in b
+        assert len(fast) == len(brute)
+
+
+def test_lcs_single_repeated_char():
+    assert longest_common_substring("aaaa", "aa") == "aa"
+    assert longest_common_substring("aa", "aaaa") == "aa"

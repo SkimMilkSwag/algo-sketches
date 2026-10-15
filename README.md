@@ -18,6 +18,7 @@ added over time.
 | Coin Change (min coins) | `solutions/coin_change.py` | bottom-up DP over sub-amounts (+ brute reference) | O(amount * len(coins)) time, O(amount) space |
 | Topological Sort | `solutions/topo_sort.py` | Kahn's algorithm (in-degree queue, cycle detection) + brute reference | O(V + E) time, O(V + E) space |
 | LRU Cache | `solutions/lru_cache.py` | OrderedDict: MRU at the back, evict from the front | O(1) get/put, O(capacity) space |
+| Longest Common Substring | `solutions/longest_common_substring.py` | DP over suffix lengths, single rolling row (+ brute reference) | O(m*n) time, O(min(m,n)) space |
 
 ## Run the tests
 
