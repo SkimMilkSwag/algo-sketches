@@ -362,3 +362,62 @@ def test_lcs_matches_brute_on_random_inputs():
 def test_lcs_single_repeated_char():
     assert longest_common_substring("aaaa", "aa") == "aa"
     assert longest_common_substring("aa", "aaaa") == "aa"
+
+
+from solutions.streaming_median import MedianStream, median_brute
+
+
+def test_streaming_median_matches_brute_on_every_prefix():
+    """Feed a random stream; after each insert the median must equal the
+    brute reference computed on every value seen so far."""
+    import random
+    rng = random.Random(7)
+    stream = MedianStream()
+    values: list[int] = []
+    for _ in range(200):
+        x = rng.randint(-50, 50)
+        stream.add(x)
+        values.append(x)
+        assert stream.median() == median_brute(values)
+
+
+def test_streaming_median_known_sequence():
+    s = MedianStream()
+    expected = []
+    for x in [5, 1, 3, 2, 8, 0]:
+        s.add(x)
+        expected.append(s.median())
+    # odd sizes return the exact middle element; even sizes the mean of the
+    # two middles — pinning both behaviours on a hand-checkable stream.
+    assert expected == [5.0, 3.0, 3.0, 2.5, 3.0, 2.5]
+
+
+def test_streaming_median_duplicates_and_negatives():
+    s = MedianStream()
+    all_vals = [4, 4, 4, -10, -10, -10, -10]
+    for x in all_vals:
+        s.add(x)
+        assert s.median() == median_brute(all_vals[: len(s)])
+    assert s.median() == median_brute(all_vals)
+
+
+def test_streaming_median_empty_raises():
+    import pytest
+    with pytest.raises(ValueError):
+        MedianStream().median()
+
+
+def test_streaming_median_len_and_monotone_streams():
+    """Monotone streams stress the rebalancing: strictly ascending first,
+    then descending into negative territory — every prefix is checked."""
+    s = MedianStream()
+    seen: list[int] = []
+    for i in range(1, 30):  # ascending: each new value is the new maximum
+        s.add(i)
+        seen.append(i)
+        assert len(s) == i
+        assert s.median() == median_brute(seen)
+    for i in range(-1, -20, -1):  # descending below everything so far
+        s.add(i)
+        seen.append(i)
+        assert s.median() == median_brute(seen)

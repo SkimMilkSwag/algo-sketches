@@ -19,6 +19,7 @@ added over time.
 | Topological Sort | `solutions/topo_sort.py` | Kahn's algorithm (in-degree queue, cycle detection) + brute reference | O(V + E) time, O(V + E) space |
 | LRU Cache | `solutions/lru_cache.py` | OrderedDict: MRU at the back, evict from the front | O(1) get/put, O(capacity) space |
 | Longest Common Substring | `solutions/longest_common_substring.py` | DP over suffix lengths, single rolling row (+ brute reference) | O(m*n) time, O(min(m,n)) space |
+| Streaming Median Maintenance | `solutions/streaming_median.py` | two heaps (max-heap low / min-heap high, O(1) median query) + brute reference | O(n log n) total for n adds, O(1) per median |
 
 ## Run the tests
 
