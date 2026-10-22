@@ -421,3 +421,57 @@ def test_streaming_median_len_and_monotone_streams():
         s.add(i)
         seen.append(i)
         assert s.median() == median_brute(seen)
+
+
+from solutions.edit_distance import edit_distance, edit_distance_brute
+
+
+def test_edit_distance_known():
+    # classic LeetCode 72 example
+    assert edit_distance("horse", "ros") == 3
+    assert edit_distance("intention", "execution") == 5
+    # degenerate inputs
+    assert edit_distance("", "") == 0
+    assert edit_distance("abc", "") == 3
+    assert edit_distance("", "xyz") == 3
+    # identical strings cost nothing (matches propagate down the diagonal)
+    assert edit_distance("same", "same") == 0
+
+
+def test_edit_distance_is_symmetric():
+    pairs = [
+        ("kitten", "sitting"),
+        ("flaw", "lawn"),
+        ("sunday", "saturday"),
+        ("book", "back"),
+    ]
+    for a, b in pairs:
+        assert edit_distance(a, b) == edit_distance(b, a)
+
+
+def test_edit_distance_random_matches_brute():
+    """Rolling-row DP must agree with the memoized reference on random
+    strings over a small alphabet (where both can afford to run)."""
+    import random
+
+    rng = random.Random(11)
+    alphabet = "abc"
+    for _ in range(60):
+        s = "".join(rng.choice(alphabet) for _ in range(rng.randint(0, 14)))
+        t = "".join(rng.choice(alphabet) for _ in range(rng.randint(0, 14)))
+        assert edit_distance(s, t) == edit_distance_brute(s, t)
+
+
+def test_edit_distance_operation_bound():
+    """The distance is always between 0 and the length of the longer string:
+    deleting everything from the longer one (or inserting everything into
+    the shorter) is a valid plan, so nothing can exceed that."""
+    import random
+
+    rng = random.Random(23)
+    alphabet = "ab"
+    for _ in range(40):
+        s = "".join(rng.choice(alphabet) for _ in range(rng.randint(0, 20)))
+        t = "".join(rng.choice(alphabet) for _ in range(rng.randint(0, 20)))
+        d = edit_distance(s, t)
+        assert 0 <= d <= max(len(s), len(t))
