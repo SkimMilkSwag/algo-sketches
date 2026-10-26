@@ -424,6 +424,10 @@ def test_streaming_median_len_and_monotone_streams():
 
 
 from solutions.edit_distance import edit_distance, edit_distance_brute
+from solutions.longest_increasing_subsequence import (
+    longest_increasing_subsequence,
+    longest_increasing_subsequence_with_reconstruction,
+)
 
 
 def test_edit_distance_known():
@@ -475,3 +479,71 @@ def test_edit_distance_operation_bound():
         t = "".join(rng.choice(alphabet) for _ in range(rng.randint(0, 20)))
         d = edit_distance(s, t)
         assert 0 <= d <= max(len(s), len(t))
+
+
+def test_lis_known():
+    assert longest_increasing_subsequence([10, 9, 2, 5, 3, 7, 101, 18]) == 4
+    assert longest_increasing_subsequence([0, 1, 0, 3, 2, 3]) == 4
+    assert longest_increasing_subsequence([7, 7, 7, 7, 7, 7, 7]) == 1  # strict: no duplicates
+    assert longest_increasing_subsequence([]) == 0
+    assert longest_increasing_subsequence([5]) == 1
+    assert longest_increasing_subsequence([-1, -2, -3, -4]) == 1
+    assert longest_increasing_subsequence([1, 2, 3, 4, 5]) == 5
+
+
+def _lis_brute(a):
+    """Exhaustive reference: longest strictly increasing subsequence by
+    recursive choice over suffixes (fine for the small inputs tests use)."""
+    from functools import lru_cache
+
+    n = len(a)
+
+    @lru_cache(maxsize=None)
+    def best(i: int, last: float) -> int:
+        if i == n:
+            return 0
+        take = 1 + best(i + 1, a[i]) if a[i] > last else 0
+        return max(take, best(i + 1, last))
+
+    return best(0, float("-inf"))
+
+
+def test_lis_matches_brute():
+    import random
+
+    rng = random.Random(7)
+    for _ in range(80):
+        a = [rng.randint(-5, 15) for _ in range(rng.randint(0, 12))]
+        assert longest_increasing_subsequence(a) == _lis_brute(a)
+
+
+def test_lis_reconstruction_returns_valid_subsequence():
+    import random
+
+    rng = random.Random(13)
+    cases = [
+        [10, 9, 2, 5, 3, 7, 101, 18],
+        [],
+        [42],
+        [3, 1, 2],
+        [-5, -4, -6, -3, -7, -2],
+        [1, 3, 2, 4, 3, 5],
+    ]
+    cases += [[rng.randint(0, 9) for _ in range(rng.randint(0, 18))] for _ in range(50)]
+    for a in cases:
+        length, sub = longest_increasing_subsequence_with_reconstruction(a)
+        assert length == longest_increasing_subsequence(a)
+        assert len(sub) == length
+        # strictly increasing
+        assert all(x < y for x, y in zip(sub, sub[1:]))
+        # every element actually comes from the input, in order
+        it = iter(a)
+        assert all(any(x == v for x in it) for v in sub)
+
+
+def test_lis_reconstruction_ties_break_earliest():
+    # two equal-length LIS exist ([1, 3] and [2, 3]); reconstruction picks the
+    # earliest-occurrence one because it fills lengths from the front-most
+    # qualifying positions.
+    length, sub = longest_increasing_subsequence_with_reconstruction([1, 2, 3])
+    assert (length, sub) == (3, [1, 2, 3])

@@ -21,6 +21,7 @@ added over time.
 | Longest Common Substring | `solutions/longest_common_substring.py` | DP over suffix lengths, single rolling row (+ brute reference) | O(m*n) time, O(min(m,n)) space |
 | Streaming Median Maintenance | `solutions/streaming_median.py` | two heaps (max-heap low / min-heap high, O(1) median query) + brute reference | O(n log n) total for n adds, O(1) per median |
 | Edit Distance (Levenshtein) | `solutions/edit_distance.py` | DP over prefix lengths, single rolling row (+ brute reference) | O(m*n) time, O(min(m,n)) space |
+| Longest Increasing Subsequence | `solutions/longest_increasing_subsequence.py` | patience sorting (bisect_left on minimal tails) + reconstruction | O(n log n) time, O(n) space |
 
 ## Run the tests
 
