@@ -424,6 +424,7 @@ def test_streaming_median_len_and_monotone_streams():
 
 
 from solutions.edit_distance import edit_distance, edit_distance_brute
+from solutions.knapsack import knapsack, knapsack_brute
 from solutions.longest_increasing_subsequence import (
     longest_increasing_subsequence,
     longest_increasing_subsequence_with_reconstruction,
@@ -547,3 +548,60 @@ def test_lis_reconstruction_ties_break_earliest():
     # qualifying positions.
     length, sub = longest_increasing_subsequence_with_reconstruction([1, 2, 3])
     assert (length, sub) == (3, [1, 2, 3])
+
+
+def test_knapsack_known():
+    # classic 0/1 example: items (w=1,v=1), (w=3,v=4), (w=4,v=5), capacity 4
+    assert knapsack([1, 3, 4], [1, 4, 5], 4) == 5
+    assert knapsack([2, 3, 4, 5], [3, 4, 5, 6], 8) == 10
+    # nothing fits: weight over capacity is skipped entirely
+    assert knapsack([7, 8], [100, 200], 5) == 0
+    # everything fits: take all of it
+    assert knapsack([1, 2, 3], [10, 20, 30], 6) == 60
+    # degenerate inputs
+    assert knapsack([], [], 10) == 0
+    assert knapsack([1, 2], [5, 9], 0) == 0
+
+
+def test_knapsack_01_semantics():
+    """Each item is usable at most once: the rolling row must never count a
+    single high-value item more than its multiplicity in the input."""
+    # one item of weight 2 / value 5, capacity 8: best is still 5, not 20
+    assert knapsack([2], [5], 8) == 5
+    # two copies are two items and may both be taken
+    assert knapsack([2, 2], [5, 5], 8) == 10
+
+
+def test_knapsack_random_matches_brute():
+    """DP must agree with the exhaustive subset reference on small random
+    instances where brute force is cheap."""
+    import random
+
+    rng = random.Random(41)
+    for _ in range(60):
+        n = rng.randint(0, 10)
+        weights = [rng.randint(1, 8) for _ in range(n)]
+        values = [rng.randint(1, 20) for _ in range(n)]
+        capacity = rng.randint(0, 15)
+        assert knapsack(weights, values, capacity) == knapsack_brute(weights, values, capacity)
+
+
+def test_knapsack_value_bounded_by_total():
+    """The answer is never above the sum of all values and never negative."""
+    import random
+
+    rng = random.Random(57)
+    for _ in range(40):
+        n = rng.randint(0, 12)
+        weights = [rng.randint(1, 6) for _ in range(n)]
+        values = [rng.randint(1, 9) for _ in range(n)]
+        capacity = rng.randint(0, 20)
+        got = knapsack(weights, values, capacity)
+        assert 0 <= got <= sum(values)
+
+
+def test_knapsack_mismatched_lengths():
+    import pytest
+
+    with pytest.raises(ValueError):
+        knapsack([1, 2], [3], 5)
