@@ -605,3 +605,88 @@ def test_knapsack_mismatched_lengths():
 
     with pytest.raises(ValueError):
         knapsack([1, 2], [3], 5)
+
+
+# --- Word Break -------------------------------------------------------------
+
+from solutions.word_break import can_word_break, count_word_breaks  # noqa: E402
+
+
+def test_word_break_known():
+    assert can_word_break("leetcode", ["leet", "code"]) is True
+    assert can_word_break("applepenapple", ["apple", "pen"]) is True
+    assert can_word_break("catsandog", ["cats", "dog", "sand", "and", "cat"]) is False
+    # single word, exactly the input
+    assert can_word_break("aaaa", ["aaaa"]) is True
+    # repeated single letters
+    assert can_word_break("aaaa", ["a", "aa"]) is True
+    # characters that are not in the vocabulary
+    assert can_word_break("abcxyz", ["ab", "cd"]) is False
+
+
+def test_word_break_edge_cases():
+    assert can_word_break("", ["a"]) is True          # empty input breaks trivially
+    assert can_word_break("a", []) is False           # non-empty input, no words
+    assert can_word_break("", []) is True
+    # all-empty word list is the same as no words at all
+    assert can_word_break("a", ["", ""]) is False
+
+
+def test_word_break_duplicates_are_synonyms():
+    # duplicate dict entries must not change reachability
+    assert can_word_break("leetcode", ["leet", "code", "code", "leet"]) is True
+    assert can_word_break("zz", ["z", "z"]) is True
+
+
+def test_word_break_long_words_bound_the_scan():
+    # a 50-char word in the vocab must not break correctness for short inputs
+    long = "a" * 50
+    assert can_word_break("aaaa", [long]) is False
+    assert can_word_break(long, [long]) is True
+
+
+def test_word_break_count_known():
+    assert count_word_breaks("", ["a"]) == 1          # the single empty segmentation
+    assert count_word_breaks("a", ["a", "aa"]) == 1   # only ["a"]
+    assert count_word_breaks("aaaa", ["a", "aa", "aaa", "aaaa"]) == 8
+    # LeetCode 139-style input with exactly one segmentation
+    assert count_word_breaks("leetcode", ["leet", "code"]) == 1
+    assert count_word_breaks("applepenapple", ["apple", "pen"]) == 1
+    assert count_word_breaks("catsandog", ["cats", "dog", "sand", "and", "cat"]) == 0
+    assert count_word_breaks("xyz", []) == 0
+
+
+def test_count_matches_can():
+    # whenever can_word_break says yes, the count is at least 1, and vice versa
+    import random
+
+    rng = random.Random(3)
+    alphabet = "abc"
+    for _ in range(120):
+        n = rng.randint(0, 8)
+        s = "".join(rng.choice(alphabet) for _ in range(n))
+        words = ["".join(rng.choice(alphabet) for _ in range(rng.randint(1, 3)))
+                 for _ in range(rng.randint(0, 5))]
+        assert (can_word_break(s, words) is True) == (count_word_breaks(s, words) > 0)
+
+
+def test_count_is_a_fibonacci_growth_case():
+    # s = "a"*n with {"a", "aa"}: segmentations are compositions of n into
+    # 1s and 2s, i.e. Fibonacci numbers F(n+1).
+    def fib(k):
+        a, b = 0, 1
+        for _ in range(k):
+            a, b = b, a + b
+        return a
+
+    for n in range(0, 14):
+        s = "a" * n
+        assert count_word_breaks(s, ["a", "aa"]) == fib(n + 1), n
+
+
+def test_count_duplicates_are_synonyms():
+    # two identical dict entries must not double the count: "aaaa" with
+    # {a, aa} has F(5) = 5 distinct segmentations whether the dict lists
+    # each word once or twice
+    assert count_word_breaks("aaaa", ["a", "aa"]) == 5
+    assert count_word_breaks("aaaa", ["a", "aa", "a", "aa"]) == 5

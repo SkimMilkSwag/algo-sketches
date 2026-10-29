@@ -23,6 +23,7 @@ added over time.
 | Edit Distance (Levenshtein) | `solutions/edit_distance.py` | DP over prefix lengths, single rolling row (+ brute reference) | O(m*n) time, O(min(m,n)) space |
 | Longest Increasing Subsequence | `solutions/longest_increasing_subsequence.py` | patience sorting (bisect_left on minimal tails) + reconstruction | O(n log n) time, O(n) space |
 | 0/1 Knapsack | `solutions/knapsack.py` | bottom-up DP over capacity, single rolling row (+ exhaustive subset reference) | O(n * capacity) time, O(capacity) space |
+| Word Break (can + count) | `solutions/word_break.py` | prefix DP: breakability boolean and segmentation count in one pass | O(n * m) time, O(n) space (n = len(s), m = max word length) |
 
 ## Run the tests
 
