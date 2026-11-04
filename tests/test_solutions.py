@@ -690,3 +690,91 @@ def test_count_duplicates_are_synonyms():
     # each word once or twice
     assert count_word_breaks("aaaa", ["a", "aa"]) == 5
     assert count_word_breaks("aaaa", ["a", "aa", "a", "aa"]) == 5
+
+
+# --- longest common subsequence ---------------------------------------------
+
+def test_lcs_basic():
+    from solutions.longest_common_subsequence import (
+        longest_common_subsequence,
+        longest_common_subsequence_length,
+    )
+
+    assert longest_common_subsequence_length("abcde", "ace") == 3
+    assert longest_common_subsequence("abcde", "ace") == "ace"
+    # shared prefix only
+    assert longest_common_subsequence_length("abcdef", "abz") == 2
+    assert longest_common_subsequence("abcdef", "abz") == "ab"
+
+
+def test_lcs_empty_inputs():
+    from solutions.longest_common_subsequence import (
+        longest_common_subsequence,
+        longest_common_subsequence_length,
+    )
+
+    assert longest_common_subsequence("", "abc") == ""
+    assert longest_common_subsequence("abc", "") == ""
+    assert longest_common_subsequence_length("", "") == 0
+    # no shared characters at all
+    assert longest_common_subsequence("abc", "xyz") == ""
+
+
+def test_lcs_reconstruction_matches_length():
+    from solutions.longest_common_subsequence import (
+        longest_common_subsequence,
+        longest_common_subsequence_length,
+    )
+
+    a = "XMJYAUZ"
+    b = "MZJAWXU"
+    sub = longest_common_subsequence(a, b)
+    assert len(sub) == longest_common_subsequence_length(a, b)
+    # the returned string must be a genuine subsequence of both inputs
+    def is_sub(s: str, t: str) -> bool:
+        it = iter(t)
+        return all(ch in it for ch in s)
+
+    assert is_sub(sub, a) and is_sub(sub, b)
+
+
+def test_lcs_repeated_characters():
+    from solutions.longest_common_subsequence import (
+        longest_common_subsequence,
+        longest_common_subsequence_length,
+    )
+
+    # "aaa" vs "aa": only two can match even though the characters repeat
+    assert longest_common_subsequence_length("aaa", "aa") == 2
+    assert longest_common_subsequence("aaa", "aa") == "aa"
+
+
+def test_lcs_vs_brute_random():
+    import random
+
+    from solutions.longest_common_subsequence import (
+        longest_common_subsequence,
+        longest_common_subsequence_brute,
+        longest_common_subsequence_length,
+    )
+
+    rng = random.Random(42)
+    for _ in range(30):
+        a = "".join(rng.choice("abcd") for _ in range(rng.randint(0, 12)))
+        b = "".join(rng.choice("abcd") for _ in range(rng.randint(0, 12)))
+        fast = longest_common_subsequence(a, b)
+        # lengths must agree exactly
+        assert len(fast) == longest_common_subsequence_length(a, b)
+        if len(a) <= 12 and len(b) <= 12:
+            brute_len = len(longest_common_subsequence_brute(a, b))
+            assert len(fast) == brute_len
+
+
+def test_lcs_vs_brute_known_case():
+    from solutions.longest_common_subsequence import (
+        longest_common_subsequence,
+        longest_common_subsequence_brute,
+    )
+
+    a, b = "AGGTAB", "GXTXAYB"
+    assert longest_common_subsequence(a, b) == longest_common_subsequence_brute(a, b)
