@@ -25,6 +25,7 @@ added over time.
 | Longest Increasing Subsequence | `solutions/longest_increasing_subsequence.py` | patience sorting (bisect_left on minimal tails) + reconstruction | O(n log n) time, O(n) space |
 | 0/1 Knapsack | `solutions/knapsack.py` | bottom-up DP over capacity, single rolling row (+ exhaustive subset reference) | O(n * capacity) time, O(capacity) space |
 | Word Break (can + count) | `solutions/word_break.py` | prefix DP: breakability boolean and segmentation count in one pass | O(n * m) time, O(n) space (n = len(s), m = max word length) |
+| Interval Scheduling (max non-overlapping set) | `solutions/interval_scheduling.py` | greedy by end time (exchange argument in docstring) + exhaustive subset reference | O(n log n) time, O(1) space |
 
 ## Run the tests
 

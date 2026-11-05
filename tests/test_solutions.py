@@ -778,3 +778,67 @@ def test_lcs_vs_brute_known_case():
 
     a, b = "AGGTAB", "GXTXAYB"
     assert longest_common_subsequence(a, b) == longest_common_subsequence_brute(a, b)
+
+
+from solutions.interval_scheduling import (  # noqa: E402
+    interval_scheduling,
+    interval_scheduling_brute,
+)
+
+
+def test_interval_scheduling_known():
+    # classic LeetCode-adjacent example: [1,2],[2,3],[3,4] all chain
+    assert interval_scheduling([(1, 2), (2, 3), (3, 4)]) == 3
+    # overlapping cluster: pick the earliest-finishing one
+    assert interval_scheduling([(1, 10), (2, 3), (4, 5)]) == 2
+    # touching endpoints are compatible (half-open convention)
+    assert interval_scheduling([(1, 2), (2, 3)]) == 2
+    # degenerate inputs
+    assert interval_scheduling([]) == 0
+    assert interval_scheduling([(5, 5)]) == 1
+
+
+def test_interval_scheduling_tie_break_deterministic():
+    # same end time: the sweep must not double-count or skip
+    assert interval_scheduling([(1, 3), (2, 3), (3, 4)]) == 2
+    # all identical: exactly one fits
+    assert interval_scheduling([(1, 5), (1, 5), (1, 5)]) == 1
+
+
+def test_interval_scheduling_random_vs_brute():
+    import random
+
+    rng = random.Random(3)
+    for _ in range(60):
+        n = rng.randint(1, 9)
+        intervals = [(a, b) for a, b in
+                     sorted((rng.randint(0, 10), rng.randint(0, 10)) for _ in range(n)) if a <= b]
+        assert interval_scheduling(intervals) == interval_scheduling_brute(intervals)
+
+
+def test_interval_scheduling_result_is_valid_subset():
+    # the returned count must be achievable: no LARGER compatible subset exists
+    import random
+
+    rng = random.Random(17)
+    for _ in range(25):
+        n = rng.randint(2, 8)
+        raw = sorted((rng.randint(0, 8), rng.randint(0, 8)) for _ in range(n))
+        intervals = [(a, b) for a, b in raw if a < b]
+        if not intervals:
+            continue
+        k = interval_scheduling(intervals)
+        assert 1 <= k <= len(intervals)
+        best = 0
+        for mask in range(1 << len(intervals)):
+            chosen = [intervals[i] for i in range(len(intervals)) if (mask >> i) & 1]
+            ok = True
+            for x in range(len(chosen)):
+                for y in range(x + 1, len(chosen)):
+                    s1, e1 = chosen[x]
+                    s2, e2 = chosen[y]
+                    if not (e1 <= s2 or e2 <= s1):
+                        ok = False
+            if ok:
+                best = max(best, len(chosen))
+        assert k == best
